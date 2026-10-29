@@ -1,0 +1,18 @@
+# NeMo Agent Toolkit profiling of SMRITI (Tier 2). Run from the repo root:
+#   nat eval --config_file src/smriti/bench/configs/nat/profile.yml
+workflow:
+  _type: smriti_episode
+  bench_config: src/smriti/bench/configs/demo.yaml
+  store: postgres
+
+eval:
+  general:
+    output_dir: results/nat_profile
+    max_concurrency: 8
+    dataset:
+      _type: json
+      file_path: src/smriti/bench/configs/nat/episodes.json
+    profiler:
+      base_metrics: true
+      bottleneck_analysis:
+        enable_simple_stack: true

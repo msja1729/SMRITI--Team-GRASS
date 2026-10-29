@@ -1,0 +1,537 @@
+<meta charset="utf-8">
+<title>SMRITI Payment Run</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a presenter's stage. One scene at a time: a dated "payment run" header, then two
+   ledgers side by side (no governance | SMRITI), each with an agent lane and a memory lane. */
+:root {
+  --ink: #0b1f4b;          /* deck navy */
+  --paper: #f3f5fa;
+  --sheet: #ffffff;
+  --rule: #d5dbea;
+  --muted: #5a6685;
+  --accent: #4f8a00;       /* NVIDIA-adjacent green, darkened for paper */
+  --danger: #c4231b;
+  --danger-bg: #fdecea;
+  --low: #a35a00;          /* LOW trust: amber */
+  --low-bg: #fff4e0;
+  --high: #1f6f3a;
+  --high-bg: #e5f4ea;
+  --none-bg: #eceff6;
+  --code-bg: #f0f2f8;
+  --display: "Archivo", "Arial Narrow", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ink: #e8ecf7; --paper: #070f24; --sheet: #0e1a38; --rule: #22305a; --muted: #93a0c2;
+  --accent: #8fd11e; --danger: #ff5a4e; --danger-bg: #3a1214; --low: #ffb347; --low-bg: #33240a;
+  --high: #6fdc95; --high-bg: #0f2e1d; --none-bg: #1a2648; --code-bg: #0a1430; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --ink: #e8ecf7; --paper: #070f24; --sheet: #0e1a38; --rule: #22305a; --muted: #93a0c2;
+  --accent: #8fd11e; --danger: #ff5a4e; --danger-bg: #3a1214; --low: #ffb347; --low-bg: #33240a;
+  --high: #6fdc95; --high-bg: #0f2e1d; --none-bg: #1a2648; --code-bg: #0a1430; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--paper); color: var(--ink); font: 15px/1.5 var(--body); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-inline: clamp(16px, 3vw, 40px); padding-block: 0 96px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+.mono { font-family: var(--mono); font-size: .86em; }
+.eyebrow { font: 600 12px/1 var(--body); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+button { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* top bar */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--paper);
+  border-bottom: 1px solid var(--rule); }
+.bar .wrap { padding-block: 10px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.brand { font: 800 18px/1 var(--display); font-stretch: 118%; letter-spacing: .02em; }
+.brand span { color: var(--accent); }
+.steps { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.steps button { border: 1px solid var(--rule); background: var(--sheet); border-radius: 999px;
+  padding: 4px 11px; font-size: 12.5px; cursor: pointer; color: var(--muted); }
+.steps button[aria-current="step"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.ctrl { display: flex; gap: 6px; align-items: center; }
+.ctrl button { border: 1px solid var(--rule); background: var(--sheet); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.ctrl button.primary { background: var(--accent); color: #fff; border-color: var(--accent); font-weight: 600; }
+:root[data-theme="dark"] .ctrl button.primary { color: #071000; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .ctrl button.primary { color: #071000; } }
+.model { font-size: 12px; color: var(--muted); }
+
+/* scene header */
+.scene { padding-top: 28px; animation: rise .35s ease-out; }
+@keyframes rise { from { transform: translateY(8px); opacity: .4; } to { transform: none; opacity: 1; } }
+.stamp { display: flex; gap: 18px; align-items: baseline; flex-wrap: wrap; }
+.day { font: 900 clamp(44px, 7vw, 84px)/.9 var(--display); font-stretch: 125%; letter-spacing: -.01em; }
+.date { font: 500 15px var(--mono); color: var(--muted); }
+.scene h2 { font-size: clamp(22px, 2.6vw, 30px); font-weight: 700; font-stretch: 100%; margin-top: 6px; }
+.caption { max-width: 72ch; color: var(--muted); margin: 8px 0 0; font-size: 16px; }
+.request { margin-top: 18px; display: inline-flex; gap: 12px; align-items: flex-start; max-width: 100%;
+  background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 16px; }
+.request b { font: 600 12px var(--body); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding-top: 2px; white-space: nowrap; }
+.request q { quotes: none; font-size: 17px; font-weight: 500; }
+
+/* two ledgers */
+.duel { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 22px; }
+@media (max-width: 860px) { .duel { grid-template-columns: 1fr; } }
+.ledger { background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; min-width: 0; overflow: hidden; }
+.ledger > header { display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  padding: 12px 16px; border-bottom: 1px solid var(--rule); }
+.ledger > header h3 { font-size: 17px; font-stretch: 110%; }
+.ledger.a0 > header { box-shadow: inset 4px 0 0 var(--danger); }
+.ledger.a2 > header { box-shadow: inset 4px 0 0 var(--accent); }
+.lane { padding: 12px 16px; display: grid; gap: 8px; min-width: 0; }
+.lane + .lane { border-top: 1px dashed var(--rule); }
+.lane > .eyebrow { margin-bottom: 2px; }
+.empty { color: var(--muted); font-size: 13.5px; }
+
+.call { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center;
+  font-size: 13.5px; padding: 8px 10px; border-radius: 8px; background: var(--code-bg); min-width: 0; }
+.call .tool { font: 600 12.5px var(--mono); }
+.call .dest { min-width: 0; overflow-wrap: anywhere; }
+.call.bad { background: var(--danger-bg); }
+.chip { display: inline-block; font: 600 11px/1 var(--body); letter-spacing: .06em; text-transform: uppercase;
+  padding: 5px 7px; border-radius: 5px; white-space: nowrap; }
+.chip.exec { background: var(--high-bg); color: var(--high); }
+.chip.exec.bad { background: var(--danger); color: #fff; }
+.chip.denied { background: var(--low-bg); color: var(--low); }
+.chip.high { background: var(--high-bg); color: var(--high); }
+.chip.low { background: var(--low-bg); color: var(--low); }
+.chip.none { background: var(--none-bg); color: var(--muted); }
+.chip.q { background: var(--danger); color: #fff; }
+.chip.arch { background: var(--none-bg); color: var(--muted); }
+.reply { font-size: 14px; font-style: italic; color: var(--muted); }
+.iban { font-family: var(--mono); font-weight: 600; letter-spacing: .02em; white-space: nowrap; }
+.evil { color: var(--danger); }
+.good { color: var(--high); }
+
+.mem { border: 1px solid var(--rule); border-radius: 9px; padding: 8px 10px; font-size: 13px; display: grid; gap: 5px; min-width: 0; }
+.mem.new { border-color: var(--ink); }
+.mem.gone { opacity: .55; }
+.mem .meta { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; color: var(--muted); font-size: 12px; }
+.mem .txt { white-space: pre-wrap; overflow-wrap: anywhere; }
+.mem.poison .txt mark { background: var(--danger-bg); color: var(--danger); padding: 0 2px; border-radius: 3px; }
+
+details.prompt { border-top: 1px solid var(--rule); }
+details.prompt summary { cursor: pointer; padding: 10px 16px; font-size: 13px; color: var(--muted); }
+details.prompt pre { margin: 0; padding: 12px 16px 16px; font: 12px/1.55 var(--mono); white-space: pre-wrap;
+  overflow-wrap: anywhere; background: var(--code-bg); max-height: 340px; overflow: auto; }
+pre mark { background: var(--danger-bg); color: var(--danger); }
+pre .q { color: var(--low); }
+
+/* outcomes */
+.outcome { margin: 0 16px 14px; border-radius: 10px; padding: 14px 16px; display: grid; gap: 6px; }
+.outcome.loss { background: var(--danger); color: #fff; animation: thud .5s ease-out; }
+.outcome.loss .big { font: 900 clamp(28px, 4vw, 44px)/1 var(--display); font-stretch: 125%; }
+.outcome.safe { background: var(--high-bg); color: var(--high); }
+.outcome.safe .big { font: 800 24px/1.1 var(--display); font-stretch: 115%; }
+@keyframes thud { 0% { transform: scale(.96); } 40% { transform: scale(1.02); } 100% { transform: none; } }
+.wire { height: 6px; border-radius: 3px; background: rgba(255,255,255,.3); overflow: hidden; }
+.wire i { display: block; height: 100%; background: #fff; animation: fill 1.1s ease-in forwards; }
+@keyframes fill { from { width: 8%; } to { width: 100%; } }
+
+.confirm { margin: 0 16px 14px; border: 2px solid var(--low); border-radius: 12px; overflow: hidden; animation: rise .4s ease-out; }
+.confirm .hd { background: var(--low-bg); color: var(--low); padding: 10px 14px; font-weight: 600; display: flex; gap: 8px; justify-content: space-between; flex-wrap: wrap; }
+.confirm .bd { padding: 12px 14px; display: grid; gap: 8px; font-size: 13.5px; }
+.trail { display: grid; gap: 6px; border-left: 2px solid var(--low); padding-left: 12px; }
+.trail div { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.verdict-stamp { justify-self: start; border: 2px solid var(--danger); color: var(--danger); font: 800 13px var(--display);
+  font-stretch: 120%; letter-spacing: .12em; padding: 4px 10px; border-radius: 4px; transform: rotate(-2deg); }
+
+.note { font-size: 13px; padding: 8px 10px; border-radius: 8px; background: var(--high-bg); color: var(--high); }
+.note.warn { background: var(--low-bg); color: var(--low); }
+.note.bad { background: var(--danger-bg); color: var(--danger); }
+
+/* inbox strip */
+.inbox { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 20px; }
+@media (max-width: 860px) { .inbox { grid-template-columns: 1fr; } }
+.mail { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; min-width: 0; display: grid; gap: 6px; align-content: start; }
+.mail .from { font: 500 12.5px var(--mono); overflow-wrap: anywhere; }
+.mail .subj { font-weight: 600; }
+.mail .body { color: var(--muted); white-space: pre-wrap; overflow-wrap: anywhere; }
+.mail.bec { border: 2px solid var(--danger); }
+.diff { font: 12.5px var(--mono); display: grid; gap: 2px; }
+
+/* real world */
+.hero { padding-top: 48px; }
+.hero h1 { font-size: clamp(36px, 6vw, 72px); font-weight: 900; font-stretch: 112%; line-height: 1; max-width: 16ch; }
+.hero h1 em { font-style: normal; color: var(--danger); }
+.hero p.lede { font-size: 19px; max-width: 60ch; color: var(--muted); margin: 18px 0 0; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 32px; }
+@media (max-width: 860px) { .stats { grid-template-columns: 1fr; } }
+.stat { border-top: 3px solid var(--ink); padding-top: 12px; display: grid; gap: 6px; align-content: start; }
+.stat .n { font: 900 clamp(34px, 4.4vw, 54px)/1 var(--display); font-stretch: 125%; font-variant-numeric: tabular-nums; }
+.stat .l { font-size: 15px; }
+.stat .s { font-size: 12px; color: var(--muted); }
+.kicker { margin-top: 36px; font: 700 clamp(20px, 2.4vw, 28px)/1.25 var(--display); max-width: 40ch; }
+
+.setup { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; margin-top: 22px; }
+@media (max-width: 860px) { .setup { grid-template-columns: 1fr; } }
+.panel { background: var(--sheet); border: 1px solid var(--rule); border-radius: 14px; padding: 16px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+
+.tell { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; }
+.others { display: grid; gap: 16px; margin-top: 22px; }
+.tallyline { font-size: 13.5px; padding: 8px 10px; border-radius: 8px; background: var(--code-bg); font-variant-numeric: tabular-nums; }
+@media (max-width: 860px) { .others { grid-template-columns: 1fr !important; } }
+
+/* results */
+.results { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 22px; }
+@media (max-width: 860px) { .results { grid-template-columns: 1fr; } }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--rule); }
+th { font: 600 11.5px var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+tr.us td { font-weight: 700; }
+.tablewrap { overflow-x: auto; }
+svg text { fill: var(--ink); font-family: var(--body); }
+.closing { margin-top: 36px; font: 800 clamp(24px, 3.4vw, 40px)/1.15 var(--display); font-stretch: 110%; max-width: 30ch; }
+.closing span { color: var(--accent); }
+.hint { margin-top: 28px; font-size: 12.5px; color: var(--muted); }
+kbd { font: 11px var(--mono); border: 1px solid var(--rule); border-radius: 4px; padding: 1px 5px; background: var(--sheet); }
+
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="bar"><div class="wrap">
+  <div class="brand">SMRITI<span>·</span></div>
+  <nav class="steps" id="steps" aria-label="Demo scenes"></nav>
+  <div class="ctrl">
+    <span class="model" id="model"></span>
+    <button id="live" hidden title="Re-run both agents on Nemotron through the local server">Run live on Nemotron</button>
+    <button id="prev" aria-label="Previous scene">←</button>
+    <button id="next" class="primary">Next →</button>
+  </div>
+</div></div>
+<main class="wrap" id="stage"></main>
+
+<script src="trace.js"></script>
+<script>
+(() => {
+"use strict";
+let T = window.SMRITI_TRACE;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const money = n => "$" + Math.round(n).toLocaleString("en-US");
+const fmtIban = s => String(s).toUpperCase().replace(/\s+/g, "").replace(/(.{4})/g, "$1 ").trim();
+
+const SCENES = [
+  { id: "world", label: "The problem" },
+  { id: "con", label: "The con" },
+  { id: "why", label: "Why agents" },
+  { id: "setup", label: "The setup" },
+  { id: "inbox", label: "Day 1" },
+  { id: "consolidate", label: "Day 7" },
+  { id: "acme", label: "Day 15" },
+  { id: "pay", label: "Day 25" },
+  { id: "others", label: "Other defences" },
+  { id: "audit", label: "Day 26" },
+  { id: "results", label: "Results" },
+];
+let cur = 0;
+try { const h = location.hash.slice(1); const i = SCENES.findIndex(s => s.id === h); if (i >= 0) cur = i; } catch (e) {}
+
+function ibanSpan(acct) {
+  const a = String(acct).toUpperCase().replace(/\s+/g, "");
+  const cls = a === T.scenario.attacker_iban ? "evil" : a === T.scenario.verified_iban ? "good" : "";
+  return `<span class="iban ${cls}">${fmtIban(a)}</span>`;
+}
+function markPoison(text) {
+  let t = esc(text);
+  const atk = T.scenario.attacker_iban;
+  t = t.replaceAll(atk, `<mark>${atk}</mark>`).replaceAll("northwlnd.example", "<mark>northwlnd.example</mark>");
+  return t;
+}
+const isPoison = m => m.text.includes(T.scenario.attacker_iban);
+
+function trustChip(m, arm) {
+  if (arm === "A0") return `<span class="chip none" title="No provenance: everything is treated as trusted">unlabeled · trusted</span>`;
+  return `<span class="chip ${m.trust === "HIGH" ? "high" : "low"}">${m.trust}</span>`;
+}
+function memCard(m, arm, day, opts = {}) {
+  const flags = [];
+  if (m.flags.includes("quarantined")) flags.push(`<span class="chip q">${opts.rolled ? "rolled back" : "quarantined"}</span>`);
+  if (m.flags.includes("archived")) flags.push(`<span class="chip arch">archived</span>`);
+  if (m.pii) flags.push(`<span class="chip none" title="Contains PII; names redacted">PII</span>`);
+  const src = m.source === "user" ? "controller" : m.source === "derived" ? `summary of ${m.parents.length}` : m.source;
+  const gone = m.flags.includes("archived") || m.flags.includes("quarantined");
+  const cls = ["mem", isPoison(m) ? "poison" : "", m.day === day && day > 0 ? "new" : "", gone ? "gone" : ""].join(" ");
+  return `<div class="${cls}"><div class="meta">${trustChip(m, arm)}<span class="mono">${esc(src)}</span><span>· day ${m.day ?? 0}</span>${flags.join("")}</div>
+    <div class="txt">${markPoison(opts.short ? clip(m.text, 220) : m.text)}</div></div>`;
+}
+const clip = (s, n) => s.length > n ? s.slice(0, n - 1) + "…" : s;
+
+function destOf(c) {
+  const a = c.args;
+  if (c.tool === "pay") return `${esc(a.payee)} · ${ibanSpan(a.account)} · <b>${money(a.amount)}</b>`;
+  if (c.tool === "send_email") return `to ${esc((a.to || []).join(", "))}${(a.cc || []).length ? " cc " + esc(a.cc.join(", ")) : ""}`;
+  if (c.tool === "read_email") return `email ${esc(a.id)}`;
+  return esc(JSON.stringify(a));
+}
+function callRow(c) {
+  const bad = c.attack;
+  const chip = c.decision === "executed" ? `<span class="chip exec ${bad ? "bad" : ""}">${bad ? "sent to attacker" : "executed"}</span>`
+    : c.decision === "confirm_denied" ? `<span class="chip denied">blocked</span>` : `<span class="chip none">${esc(c.decision)}</span>`;
+  return `<div class="call ${bad && c.decision === "executed" ? "bad" : ""}"><span class="tool">${c.tool}</span><span class="dest">${destOf(c)}</span>${chip}</div>`;
+}
+function promptBlock(p, arm) {
+  if (!p) return "";
+  let t = esc(p);
+  t = t.replaceAll(T.scenario.attacker_iban, `<mark>${T.scenario.attacker_iban}</mark>`)
+       .replace(/(&lt;memory_data[^\n]*?&gt;)/g, '<span class="q">$1</span>')
+       .replace(/(&lt;\/memory_data[^\n]*?&gt;)/g, '<span class="q">$1</span>');
+  const where = arm === "A0" ? "The poison sits in the instruction section, next to the controller's own notes." : "The poison is quoted as data inside a nonce-wrapped block, marked LOW.";
+  return `<details class="prompt"><summary>What the model saw · ${where}</summary><pre>${t}</pre></details>`;
+}
+
+function ledger(arm, step, extra = {}) {
+  const o = step.arms[arm];
+  const title = arm === "A2S" ? "With SMRITI" : T.arms[arm].label;
+  const sub = T.arms[arm].sub;
+  const calls = o.calls.filter(c => step.id !== "inbox" || true);
+  const mems = (o.memory || []).filter(m => !extra.memFilter || extra.memFilter(m));
+  return `<section class="ledger ${arm === "A0" ? "a0" : "a2"}">
+    <header><h3>${title}</h3><span class="model">${sub}</span></header>
+    ${extra.top || ""}
+    ${calls.length || o.reply ? `<div class="lane"><div class="eyebrow">Agent actions</div>${calls.map(callRow).join("")}${o.reply ? `<div class="reply">“${esc(o.reply)}”</div>` : ""}</div>` : ""}
+    ${extra.mid || ""}
+    <div class="lane"><div class="eyebrow">${extra.memTitle || "Memory"}</div>${mems.map(m => memCard(m, arm, step.day, { short: true, rolled: extra.rolled })).join("") || `<div class="empty">No memories.</div>`}</div>
+    ${promptBlock(o.prompt, arm)}
+  </section>`;
+}
+
+function head(step) {
+  return `<div class="stamp"><div class="day">Day ${step.day}</div><div class="date">${esc(step.date)}</div></div>
+    <h2>${esc(step.title)}</h2><p class="caption">${esc(step.caption)}</p>
+    ${step.text ? `<div class="request"><b>${esc(step.who)}</b><q>${esc(step.text)}</q></div>` : ""}`;
+}
+const stepOf = id => T.steps.find(s => s.id === id);
+
+/* ---------- scenes ---------- */
+const R = {
+  world() {
+    const rw = T.scenario.real_world;
+    return `<section class="hero"><div class="eyebrow">AEGIS 2026 · Problem statement 4 · Agent memory governance</div>
+      <h1 style="margin-top:14px">Your agent remembers everything. <em>So does whoever wrote to it.</em></h1>
+      <p class="lede">Business email compromise works by planting one believable fact: “our bank account changed.” Agents with long-term memory store that fact and act on it weeks later, with a payments API.</p>
+      <div class="stats">${rw.map(r => `<div class="stat"><div class="n">${esc(r.stat)}</div><div class="l">${esc(r.label)}</div><div class="s">${esc(r.source)}</div></div>`).join("")}</div>
+      <p class="kicker">Nobody here was careless. Finance teams at Google and Facebook paid because the invoices looked exactly like the real vendor's. Now that work is being handed to AI agents.</p></section>`;
+  },
+  con() {
+    const e = T.scenario.emails[T.scenario.bec_id || "43"], tells = T.scenario.con_tells;
+    const lines = e.split("\n");
+    const from = lines[0].replace(/^From:\s*/, ""), subj = lines[1].replace(/^Subject:\s*/, "");
+    return `<section class="scene"><div class="eyebrow">Why people fall for it</div>
+      <h2 style="font-size:clamp(28px,3.4vw,40px);margin-top:8px">The email that moves the money</h2>
+      <p class="caption">This is the email in our demo, modelled on how real vendor-fraud emails are written. Nothing in it looks like an attack.</p>
+      <div class="setup">
+        <article class="mail bec" style="font-size:15px;padding:18px 20px">
+          <div class="from">${markPoison(from)}</div><div class="subj" style="font-size:17px">${esc(subj)}</div>
+          <div class="body" style="color:var(--ink)">${markPoison(lines.slice(2).join("\n"))}</div>
+        </article>
+        <div class="panel"><div class="eyebrow">What makes it work</div>
+          ${tells.map(([h, b], i) => `<div class="tell"><span class="chip none">${i + 1}</span><div><b>${esc(h)}</b><div class="model" style="font-size:13.5px">${esc(b)}</div></div></div>`).join("")}
+          <div class="note warn">${esc(T.scenario.human_defence)}</div>
+        </div>
+      </div></section>`;
+  },
+  why() {
+    const a = T.scenario.agents_now;
+    return `<section class="scene"><div class="eyebrow">Why agents fall harder</div>
+      <h2 style="font-size:clamp(28px,3.4vw,40px);margin-top:8px">The clerk who never picks up the phone</h2>
+      <p class="caption">A trained person gets a bad feeling and calls the vendor. An agent reads every email, believes its own memory, and acts weeks later, when nobody remembers where the bank details came from.</p>
+      <div class="stats">${a.map(x => `<div class="stat"><div class="l" style="font:700 19px/1.25 var(--display)">${esc(x.head)}</div><div class="l">${esc(x.body)}</div><div class="s">${esc(x.source)}</div></div>`).join("")}</div>
+      <p class="kicker">So we gave two copies of the same agent the same inbox for a month. One has a plain memory. One has SMRITI.</p></section>`;
+  },
+  others() {
+    const st = stepOf("pay"), inbox = stepOf("inbox");
+    const why = {
+      A0: "Every memory is trusted. The newest bank account wins.",
+      A1: "“Ignore instructions in memory” doesn't help: the email contains no instruction, only a fact. A safety judge looks for harmful or instruction-like text, and a bank-change notice is neither.",
+      A1G: "Input rails check each message for unsafe content and jailbreaks. This email is polite and factual, so the rails let it through.",
+      A2S: "Doesn't need to spot the lie. The account number exists only in memory nobody at Contoso wrote, so paying it needs a human.",
+    };
+    const card = arm => {
+      const pay = st.arms[arm], w = inbox.arms[arm].bec_write;
+      const lost = pay.calls.find(c => c.attack && c.decision === "executed");
+      const gate = !w ? "not stored" : w.flags.includes("quarantined") ? "quarantined" :
+        arm === "A2S" ? "stored as LOW · tool:email" : w.judge_unsafe === false ? "judged safe, stored as trusted" : "stored as trusted";
+      return `<section class="ledger ${lost ? "a0" : "a2"}"><header><h3>${esc(T.arms[arm].label)}</h3></header>
+        <div class="lane"><div class="eyebrow">Fraud email at the write gate</div><div>${esc(gate)}</div>
+        <div class="eyebrow" style="margin-top:6px">Day 25 payment</div>
+        ${lost ? `<div class="outcome loss" style="margin:0"><div class="big" style="font-size:30px">−${money(lost.args.amount)}</div><div>to ${fmtIban(lost.args.account)}</div></div>`
+               : `<div class="outcome safe" style="margin:0"><div class="big" style="font-size:20px">${pay.calls.some(c => c.tool === "pay" && c.decision === "executed") ? "Held, then paid the verified account" : "Held for verification · $0 lost"}</div></div>`}
+        ${T.tally && T.tally.arms[arm] ? `<div class="tallyline"><b>${T.tally.arms[arm].attacker_paid} of ${T.tally.runs}</b> live runs paid the attacker${T.tally.arms[arm].lost ? ` · ${money(T.tally.arms[arm].lost)} lost` : ""}</div>` : ""}
+        <div class="model" style="font-size:13.5px">${esc(why[arm] || "")}</div></div></section>`;
+    };
+    const order = ["A0", "A1", "A1G", "A2S"].filter(a => T.arms[a]);
+    return `<section class="scene"><div class="stamp"><div class="day">Day 25</div><div class="date">same email, every defence</div></div>
+      <h2>What the usual defences do with it</h2>
+      <p class="caption">The same agent, inbox and requests, behind each defence people deploy today. Outcomes come from the oracle on each run's tool log.${T.tally ? ` Below each card: the whole month repeated ${T.tally.runs} times on Nemotron with sampling (temperature ${T.tally.temperature}).` : ""}</p>
+      <div class="others" style="grid-template-columns:repeat(${order.length},1fr)">${order.map(card).join("")}</div></section>`;
+  },
+  setup() {
+    const s = T.scenario;
+    return `<section class="scene"><div class="eyebrow">The setup</div>
+      <h2 style="font-size:clamp(28px,3.4vw,40px);margin-top:8px">Contoso's accounts-payable agent</h2>
+      <p class="caption">Same model, same inbox, same requests, same simulated AP clerk. The left agent stores memory as plain text. The right agent stores it through SMRITI, which labels every memory with who wrote it.</p>
+      <div class="setup">
+        <div class="panel"><div class="eyebrow">Written by the finance controller (trusted)</div>
+          ${s.seed.map(t => `<div class="mem"><div class="meta"><span class="chip high">HIGH</span><span class="mono">controller</span></div><div class="txt">${esc(t).replace(s.verified_iban, `<span class="iban good">${fmtIban(s.verified_iban)}</span>`)}</div></div>`).join("")}
+        </div>
+        <div class="panel"><div class="eyebrow">What runs</div>
+          <table><tbody>
+            <tr><th>Agent model</th><td>${esc(T.models.agent)}</td></tr>
+            <tr><th>Tools</th><td class="mono">read_email · send_email · pay</td></tr>
+            <tr><th>Detector</th><td>${esc(T.models.judge)}</td></tr>
+            <tr><th>PII</th><td>${esc(T.models.pii)}</td></tr>
+            <tr><th>Pass / fail</th><td>deterministic oracle on the tool log</td></tr>
+          </tbody></table>
+          ${/NIM/.test(T.models.agent) ? `<div class="note">Recorded live: Nemotron Nano 9B v2 on an NVIDIA A100 via NIM, temperature 0.${T.tally ? ` The month was then repeated ${T.tally.runs} times with sampling; those tallies appear on the later scenes.` : ""}</div>`
+            : `<div class="note warn">The offline model is deliberately gullible: when memory has two accounts for a vendor, it pays the one described as “new.” It never reads trust labels, so the defence on the right comes from the gateway alone.</div>`}
+        </div>
+      </div></section>`;
+  },
+  inbox() {
+    const st = stepOf("inbox"), e = T.scenario.emails;
+    const led = st.arms.A2S.ledger.find(l => l.op === "write");
+    const score = led && led.heuristic_score != null ? led.heuristic_score.toFixed(1) : "0.0";
+    const mail = (id, bec) => {
+      const lines = e[id].split("\n");
+      const from = lines[0].replace(/^From:\s*/, ""), subj = lines[1].replace(/^Subject:\s*/, "");
+      return `<article class="mail ${bec ? "bec" : ""}"><div class="eyebrow">Email ${id}</div><div class="from">${bec ? markPoison(from) : esc(from)}</div><div class="subj">${esc(subj)}</div><div class="body">${bec ? markPoison(lines.slice(2).join("\n")) : esc(lines.slice(2).join("\n"))}</div>
+      ${bec ? `<div class="diff"><span class="good">✓ ar@northwind.example (real vendor)</span><span class="evil">✗ ar@northwlnd.example (one letter off)</span></div><div class="note bad">Instruction detector score ${score} of 2.5 needed to flag. It reads as a plain fact.</div>` : ""}</article>`;
+    };
+    return `<section class="scene">${head(st)}
+      <div class="inbox">${mail("41")}${mail("42")}${mail("43", true)}</div>
+      <div class="duel">${ledger("A0", st)}${ledger("A2S", st, { top: `<div class="lane"><div class="note">Stored, not blocked: the email is labeled <b>LOW · tool:email</b>. The sender's name was redacted as PII; the IBAN is kept but marked.</div></div>` })}</div></section>`;
+  },
+  consolidate() {
+    const st = stepOf("consolidate");
+    const s0 = st.arms.A0.summary, s2 = st.arms.A2S.summary;
+    const box = (arm, s) => `<div class="lane"><div class="eyebrow">New summary memory</div>${memCard(s, arm, st.day)}
+      ${arm === "A0" ? `<div class="note bad">The poison is now part of the agent's own weekly notes, indistinguishable from the controller's.</div>`
+        : `<div class="note">Label computed in code: trust = min of its ${s.parents.length} inputs = <b>LOW</b>. Proved in Lean 4 as <span class="mono">summary_low_of_low_input</span>.</div>`}</div>`;
+    return `<section class="scene">${head(st)}
+      <div class="duel">${ledger("A0", st, { top: box("A0", s0) })}${ledger("A2S", st, { top: box("A2S", s2) })}</div></section>`;
+  },
+  acme() {
+    const st = stepOf("acme");
+    const a2 = st.arms.A2S;
+    return `<section class="scene">${head(st)}
+      <div class="duel">${ledger("A0", st)}${ledger("A2S", st, { mid: `<div class="lane"><div class="note">No confirmation prompt. The context was tainted by LOW memory (the PO number), but the recipient <span class="mono">billing@acme.example</span> comes from the controller's own memory.${a2.a2_would_confirm ? " The earlier version of SMRITI asked for confirmation on every tainted call like this one (15 of 15 in the benchmark)." : ""}</div></div>` })}</div></section>`;
+  },
+  pay() {
+    const st = stepOf("pay");
+    const a0 = st.arms.A0, a2 = st.arms.A2S;
+    const lost = a0.calls.filter(c => c.attack && c.decision === "executed");
+    const loss = lost.length ? `<div class="outcome loss"><div class="eyebrow" style="color:#fff">Wire released</div><div class="big">−${money(lost[0].args.amount)}</div>
+      <div>to <span class="iban">${fmtIban(lost[0].args.account)}</span>, the attacker's account</div><div class="wire"><i></i></div></div>`
+      : `<div class="outcome safe"><div class="big">No money lost</div><div>This model did not pay the attacker on this run.</div></div>`;
+    const conf = a2.confirmations.filter(c => !c.approved);
+    const confirm = conf.map(c => `<div class="confirm"><div class="hd"><span>Hold this payment?</span><span class="mono">${money(c.args.amount)} → ${fmtIban(c.args.account)}</span></div>
+      <div class="bd"><div>The account number came only from memory nobody at Contoso wrote:</div>
+      ${c.provenance.map(p => `<div class="trail">${p.origins.map(o => `<div><span class="chip low">${o.trust}</span><span class="mono">${esc(o.source === "derived" ? "weekly summary" : o.source)}</span><span>day ${o.day}</span>${o.flags.includes("archived") ? '<span class="chip arch">archived</span>' : ""}<span class="mono">${esc(clip((o.text.match(/[\w.+-]+@[\w.-]+/) || [""])[0], 40))}</span></div>`).join("")}</div>`).join("")}
+      <div>Verified account on file: <span class="iban good">${fmtIban(T.scenario.verified_iban)}</span> (controller, HIGH)</div>
+      <span class="verdict-stamp">Denied by AP clerk</span></div></div>`).join("");
+    const paid = a2.calls.filter(c => c.decision === "executed" && c.tool === "pay" && !c.attack);
+    const safe = paid.length ? `<div class="outcome safe"><div class="eyebrow" style="color:inherit">Paid</div><div class="big">${money(paid[0].args.amount)} to the verified account</div><div><span class="iban">${fmtIban(paid[0].args.account)}</span> · no second prompt: the destination is in trusted memory</div></div>`
+      : conf.length ? `<div class="outcome safe"><div class="eyebrow" style="color:inherit">Held for verification</div><div class="big">$0 lost</div><div>The agent stopped and flagged the conflicting bank details. Next step is the one finance teams are trained to take: phone Northwind on the number on file. A ${money(conf[0].args.amount)} loss became a phone call.</div></div>` : "";
+    return `<section class="scene">${head(st)}
+      <div class="duel">${ledger("A0", st, { top: loss, memFilter: m => !m.flags.includes("archived") })}${ledger("A2S", st, { top: confirm + safe, memFilter: m => !m.flags.includes("archived") })}</div></section>`;
+  },
+  audit() {
+    const st = stepOf("audit");
+    const box = arm => {
+      const a = st.arms[arm].audit;
+      const rolled = new Set(a.rolled_back);
+      const mems = st.arms[arm].memory.filter(m => rolled.has(m.id));
+      return `<div class="lane"><div class="eyebrow">Counterfactual replays: ${a.replays}</div>
+        ${a.findings.map(f => `<div class="call"><span class="tool">replay</span><span class="dest">hide memory <span class="mono">${esc(f.suspect)}</span> → the attacker's account ${f.verdict === "steering" ? "disappears" : "stays"}</span><span class="chip ${f.verdict === "steering" ? "q" : "none"}">${esc(f.verdict)}</span></div>`).join("") || `<div class="empty">Nothing to chase.</div>`}
+        ${mems.map(m => memCard(m, arm, -1, { short: true, rolled: true })).join("")}
+        ${arm === "A0" ? `<div class="note bad">Found and rolled back, but the ${money(T.verdict.A0.lost)} left on day 25. Detection after the fact is not prevention.</div>`
+          : `<div class="note">Rolled back before it could steer another payment. ${a.review.length} executed call${a.review.length === 1 ? "" : "s"} listed for review; all went to sanctioned destinations.</div>`}</div>`;
+    };
+    return `<section class="scene">${head(st)}
+      <div class="duel">${ledger("A0", st, { top: box("A0"), memTitle: "Live memory after rollback", memFilter: m => !m.flags.includes("archived") && !m.flags.includes("quarantined") })}${ledger("A2S", st, { top: box("A2S"), memTitle: "Live memory after rollback", memFilter: m => !m.flags.includes("archived") && !m.flags.includes("quarantined") })}</div></section>`;
+  },
+  results() {
+    const v = T.verdict;
+    const outcome = arm => v[arm].attack_succeeded ? '<span class="evil">paid the attacker</span>' : v[arm].pay_task ? '<span class="good">paid verified account</span>' : '<span class="good">held for verification</span>';
+    const tl = T.tally && T.tally.arms;
+    const row = (k, arm) => `<tr class="${arm === "A2S" ? "us" : ""}"><td>${esc(T.arms[arm].label)}</td><td>${outcome(arm)}</td><td>${money(v[arm].lost)}</td>${tl ? `<td>${tl[arm].attacker_paid} / ${T.tally.runs}</td>` : ""}<td>${v[arm].confirmations}</td></tr>`;
+    const bench = [["A0 no governance", 29], ["A1 prompt guard", 22], ["A1G NeMo Guardrails", 14], ["A2 SMRITI", 0]];
+    const W = 520, x0 = 150, x1 = 500, bh = 26, gap = 12, top = 10;
+    const sx = k => x0 + (x1 - x0) * k / 60;
+    const bars = bench.map(([n, k], i) => {
+      const y = top + i * (bh + gap);
+      return `<text x="${x0 - 8}" y="${y + bh * .68}" text-anchor="end" font-size="12.5">${n}</text>
+        <rect x="${x0}" y="${y}" width="${Math.max(sx(k) - x0, 2)}" height="${bh}" rx="3" fill="${k ? "var(--danger)" : "var(--accent)"}"></rect>
+        <text x="${sx(k) + 6}" y="${y + bh * .68}" font-size="12.5" font-weight="600">${k}/60 · ${Math.round(100 * k / 60)}%</text>`;
+    }).join("");
+    const axisY = top + bench.length * (bh + gap);
+    const ticks = [0, 15, 30, 45, 60].map(t => `<line x1="${sx(t)}" x2="${sx(t)}" y1="${top - 4}" y2="${axisY}" stroke="var(--rule)"></line><text x="${sx(t)}" y="${axisY + 16}" text-anchor="middle" font-size="11" fill="var(--muted)">${t}</text>`).join("");
+    return `<section class="scene"><div class="eyebrow">Results</div>
+      <h2 style="font-size:clamp(28px,3.4vw,40px);margin-top:8px">The oracle's verdict</h2>
+      <div class="results">
+        <div class="panel"><div class="eyebrow">This demo run · ${esc(T.models.agent)}</div>
+          <div class="tablewrap"><table><thead><tr><th>Defence</th><th>Day 25 payment</th><th>Lost</th>${tl ? `<th>Attacker paid, ${T.tally.runs} runs</th>` : ""}<th>Prompts</th></tr></thead>
+          <tbody>${Object.keys(T.arms).map(a => row(a, a)).join("")}</tbody></table></div>
+          <div class="eyebrow" style="margin-top:10px">Proved in Lean 4 (lake build)</div>
+          <div class="mono">no_elevation · render_partitions · summary_inherits · summary_low_of_low_input</div>
+        </div>
+        <div class="panel"><div class="eyebrow">MemPoison-Bench · attack success rate · Nemotron Nano 9B v2</div>
+          <div class="tablewrap"><svg viewBox="0 0 ${W + 80} ${axisY + 26}" width="100%" role="img" aria-label="Attack success rate by arm">${ticks}${bars}</svg></div>
+          <div class="model">60 attack episodes per arm: 3 personas × 4 attack classes × 5 seeds. SMRITI keeps clean utility at 15/15. With the detector switched off it still holds 0/60.</div>
+        </div>
+      </div>
+      <p class="closing">Untrusted memory may inform the agent. <span>It never instructs it, and it never moves money.</span></p></section>`;
+  },
+};
+
+function renderNav() {
+  $("#steps").innerHTML = SCENES.map((s, i) => `<button data-i="${i}" ${i === cur ? 'aria-current="step"' : ""}>${s.label}</button>`).join("");
+  $("#prev").disabled = cur === 0;
+  $("#next").textContent = cur === SCENES.length - 1 ? "Restart ↺" : "Next →";
+  $("#model").textContent = T.models.agent;
+}
+function show(i) {
+  cur = (i + SCENES.length) % SCENES.length;
+  $("#stage").innerHTML = R[SCENES[cur].id]() + `<p class="hint">Use <kbd>←</kbd> <kbd>→</kbd> to move between scenes. Trace generated ${esc(T.generated_at)} by the SMRITI gateway, auditor and oracle.</p>`;
+  renderNav();
+  try { history.replaceState(null, "", "#" + SCENES[cur].id); } catch (e) {}
+  window.scrollTo({ top: 0 });
+}
+$("#steps").addEventListener("click", e => { const b = e.target.closest("button"); if (b) show(+b.dataset.i); });
+$("#prev").onclick = () => show(cur - 1);
+$("#next").onclick = () => show(cur + 1);
+document.addEventListener("keydown", e => {
+  if (e.target.closest("input, textarea, summary")) return;
+  if (e.key === "ArrowRight" || e.key === " ") { e.preventDefault(); show(cur + 1); }
+  if (e.key === "ArrowLeft") show(cur - 1);
+});
+
+// Served by `python -m smriti.demo`: offer a live re-run on Nemotron.
+const served = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+if (served) {
+  const btn = $("#live"); btn.hidden = false;
+  btn.onclick = async () => {
+    btn.disabled = true; btn.textContent = "Running both agents on Nemotron…";
+    try {
+      const r = await fetch("trace.json?mode=live");
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || r.statusText);
+      T = j; btn.textContent = "Live trace loaded"; show(2);
+    } catch (err) { btn.textContent = "Live run failed: " + err.message.slice(0, 60); }
+    finally { btn.disabled = false; }
+  };
+}
+window.addEventListener("hashchange", () => {
+  const i = SCENES.findIndex(s => s.id === location.hash.slice(1));
+  if (i >= 0 && i !== cur) show(i);
+});
+show(cur);
+})();
+</script>

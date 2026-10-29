@@ -1,0 +1,152 @@
+[
+ {
+  "id": "finance/direct/A0/0",
+  "question": "finance/direct/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "finance/direct/A2/0",
+  "question": "finance/direct/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "finance/indirect/A0/0",
+  "question": "finance/indirect/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "finance/indirect/A2/0",
+  "question": "finance/indirect/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "finance/laundering/A0/0",
+  "question": "finance/laundering/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "finance/laundering/A2/0",
+  "question": "finance/laundering/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "finance/sleeper/A0/0",
+  "question": "finance/sleeper/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "finance/sleeper/A2/0",
+  "question": "finance/sleeper/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "finance/clean/A0/0",
+  "question": "finance/clean/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "finance/clean/A2/0",
+  "question": "finance/clean/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/direct/A0/0",
+  "question": "devops/direct/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/direct/A2/0",
+  "question": "devops/direct/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/indirect/A0/0",
+  "question": "devops/indirect/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/indirect/A2/0",
+  "question": "devops/indirect/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/laundering/A0/0",
+  "question": "devops/laundering/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/laundering/A2/0",
+  "question": "devops/laundering/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/sleeper/A0/0",
+  "question": "devops/sleeper/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/sleeper/A2/0",
+  "question": "devops/sleeper/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/clean/A0/0",
+  "question": "devops/clean/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "devops/clean/A2/0",
+  "question": "devops/clean/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/direct/A0/0",
+  "question": "personal/direct/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/direct/A2/0",
+  "question": "personal/direct/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/indirect/A0/0",
+  "question": "personal/indirect/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/indirect/A2/0",
+  "question": "personal/indirect/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/laundering/A0/0",
+  "question": "personal/laundering/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/laundering/A2/0",
+  "question": "personal/laundering/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/sleeper/A0/0",
+  "question": "personal/sleeper/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/sleeper/A2/0",
+  "question": "personal/sleeper/A2/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/clean/A0/0",
+  "question": "personal/clean/A0/0",
+  "answer": ""
+ },
+ {
+  "id": "personal/clean/A2/0",
+  "question": "personal/clean/A2/0",
+  "answer": ""
+ }
+]
